@@ -1,4 +1,3 @@
-$(preamble)
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
@@ -50445,7 +50444,7 @@ var _3dForceGraph = createComponent({
 		state.graphData.nodes.forEach(node => {
 			const sphere = new THREE.Mesh(
 				new THREE.SphereGeometry(Math.cbrt(node[state.valField] || 1) * state.nodeRelSize, 8, 8),
-				new THREE.MeshLambertMaterial({ color: node[state.colorField] || 0xffffaa, transparent: true, opacity: 0.75 })
+				new THREE.MeshLambertMaterial({ color: node[state.colorField] || 0x242465, transparent: true, opacity: 0.75 })
 			);
 
 			sphere.name = node[state.nameField]; // Add label
