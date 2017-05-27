@@ -45,7 +45,8 @@ export default SWC.createComponent({
 		new SWC.Prop('cooldownTicks', Infinity),
 		new SWC.Prop('cooldownTime', 15000), // ms
 		new SWC.Prop('onMouseOver', undefined), // mouse over an object
-		new SWC.Prop('onClick', undefined) // click on an object
+		new SWC.Prop('onClick', undefined), // click on an object
+		new SWC.Prop('onReady', undefined) // initialised
 	],
 
 	init: (domNode, state) => {
@@ -147,9 +148,7 @@ export default SWC.createComponent({
 			.force('charge', d3.forceManyBody())
 			.force('center', d3.forceCenter())
 			.stop();
-
-		//
-			//setTimeout(() => state.graphScene.children.forEach(child => console.log(child)),1000);
+			
 		// Kick-off renderer
 		(function animate() { // IIFE 
 			if(state.onFrame) state.onFrame();
@@ -273,6 +272,11 @@ export default SWC.createComponent({
 		const startTickTime = new Date();
 		state.onFrame = layoutTick;
 		state.infoElem.textContent = '';
+
+		// Ready
+		if (state.onReady) {
+			state.onReady(state);
+		}
 
 		function resizeCanvas() {
 			if (state.width && state.height) {

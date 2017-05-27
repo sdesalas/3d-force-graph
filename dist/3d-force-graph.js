@@ -50192,8 +50192,6 @@ function createComponent(config = {}) {
 
 const ngraph = { graph: index$1, forcelayout: index$4, forcelayout3d: index$17 };
 
-//
-
 const CAMERA_DISTANCE2NODES_FACTOR = 150;
 
 var _3dForceGraph = createComponent({
@@ -50226,7 +50224,8 @@ var _3dForceGraph = createComponent({
 		new Prop('cooldownTicks', Infinity),
 		new Prop('cooldownTime', 15000), // ms
 		new Prop('onMouseOver', undefined), // mouse over an object
-		new Prop('onClick', undefined) // click on an object
+		new Prop('onClick', undefined), // click on an object
+		new Prop('onReady', undefined) // initialised
 	],
 
 	init: (domNode, state) => {
@@ -50328,9 +50327,7 @@ var _3dForceGraph = createComponent({
 			.force('charge', manyBody())
 			.force('center', center())
 			.stop();
-
-		//
-			//setTimeout(() => state.graphScene.children.forEach(child => console.log(child)),1000);
+			
 		// Kick-off renderer
 		(function animate() { // IIFE 
 			if(state.onFrame) state.onFrame();
@@ -50454,6 +50451,11 @@ var _3dForceGraph = createComponent({
 		const startTickTime = new Date();
 		state.onFrame = layoutTick;
 		state.infoElem.textContent = '';
+
+		// Ready
+		if (state.onReady) {
+			state.onReady(state);
+		}
 
 		function resizeCanvas() {
 			if (state.width && state.height) {
