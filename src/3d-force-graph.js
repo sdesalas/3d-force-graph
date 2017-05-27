@@ -29,6 +29,7 @@ export default SWC.createComponent({
 		new SWC.Prop('nodeRelSize', 4), // volume per val unit
 		new SWC.Prop('lineOpacity', 0.2),
 		new SWC.Prop('autoColorBy'),
+		new SWC.Prop('includeArrows', false),
 		new SWC.Prop('idField', 'id'),
 		new SWC.Prop('valField', 'val'),
 		new SWC.Prop('nameField', 'name'),
@@ -169,7 +170,7 @@ export default SWC.createComponent({
 		state.graphData.nodes.forEach(node => {
 			const sphere = new THREE.Mesh(
 				new THREE.SphereGeometry(Math.cbrt(node[state.valField] || 1) * state.nodeRelSize, 8, 8),
-				new THREE.MeshLambertMaterial({ color: node[state.colorField] || 0xffffaa, transparent: true, opacity: 0.75 })
+				new THREE.MeshLambertMaterial({ color: node[state.colorField] || 0x4f4fbf, transparent: true, opacity: 0.75 })
 			);
 
 			sphere.name = node[state.nameField]; // Add label
@@ -178,6 +179,7 @@ export default SWC.createComponent({
 		});
 
 		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xf0f0f0, transparent: true, opacity: state.lineOpacity });
+		const arrowMaterial = new THREE.MeshLambertMaterial({ color: 0xf0f0f0, transparent: true, opacity: state.lineOpacity });
 		state.graphData.links.forEach(link => {
 			const geometry = new THREE.BufferGeometry();
 			geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
@@ -185,7 +187,15 @@ export default SWC.createComponent({
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
 
+			if (state.includeArrows) {
+				const arrow = new THREE.ArrowHelper(new THREE.Vector3(), new THREE.Vector3(), 0, 0xf0f0f0);
+				arrow.cone.material = arrowMaterial;
+				//arrow.line.material = lineMaterial;
+				state.graphScene.add(link.__arrow = arrow);
+			}
+
 			state.graphScene.add(link.__line = line);
+
 		});
 
 		state.camera.lookAt(state.graphScene.position);
@@ -233,6 +243,17 @@ export default SWC.createComponent({
 		function layoutTick() {
 			if (cntTicks++ > state.cooldownTicks || (new Date()) - startTickTime > state.cooldownTime) {
 				state.onFrame = null; // Stop ticking graph
+				console.log('DONE!');
+				/*state.graphData.links.forEach(link => {
+					let line = link.__line;
+					let linePos = line.geometry.attributes.position;
+					let dir = new THREE.Vector3(...linePos.array.slice(3));
+					//dir.normalize();
+					let origin = new THREE.Vector3(...linePos.array.slice(0, 3));
+					let arrowHelper = new THREE.ArrowHelper(dir, origin, dir.length(), 0xf0f0f0);
+					state.scene.add(arrowHelper);
+					console.log({line, linePos });
+				});*/
 			}
 
 			layout[isD3Sim?'tick':'step'](); // Tick it
@@ -250,12 +271,13 @@ export default SWC.createComponent({
 			// Update links position
 			state.graphData.links.forEach(link => {
 				const line = link.__line,
+					arrow = link.__arrow,
 					pos = isD3Sim
 						? link
-						: layout.getLinkPosition(layout.graph.getLink(link.source, link.target).id),
-					start = pos[isD3Sim ? 'source' : 'from'],
-					end = pos[isD3Sim ? 'target' : 'to'],
-					linePos = line.geometry.attributes.position;
+						: layout.getLinkPosition(layout.graph.getLink(link.source, link.target).id);
+				let start = pos[isD3Sim ? 'source' : 'from'];
+				let end = pos[isD3Sim ? 'target' : 'to'];
+				let linePos = line.geometry.attributes.position;
 
 				linePos.array[0] = start.x;
 				linePos.array[1] = start.y || 0;
@@ -263,9 +285,22 @@ export default SWC.createComponent({
 				linePos.array[3] = end.x;
 				linePos.array[4] = end.y || 0;
 				linePos.array[5] = end.z || 0;
-
 				linePos.needsUpdate = true;
 				line.geometry.computeBoundingSphere();
+
+				if (arrow) {
+					start.y = start.y || 0;
+					start.z = start.z || 0;
+					end.y = end.y || 0;
+					end.z = end.z || 0;
+					let boundingSphere = line.geometry.boundingSphere;
+					//arrow.position.copy(end);
+					arrow.position.copy(boundingSphere.center)
+
+					arrow.setDirection(new THREE.Vector3(0,0,0).copy(end).sub(start).normalize());
+					arrow.setLength(0, 4, 2);
+				}
+
 			});
 		}
 
@@ -287,4 +322,3 @@ export default SWC.createComponent({
 		}
 	}
 });
-

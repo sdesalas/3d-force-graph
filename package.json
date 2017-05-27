@@ -25,9 +25,9 @@
     "url": "https://github.com/vasturiano/3d-force-graph/issues"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && rollup -c --banner \"$(preamble)\"",
+    "build": "rm -rf dist && mkdir dist && rollup -c",
     "watch": "rollup -c -w",
-    "minify": "uglifyjs dist/3d-force-graph.js -o dist/3d-force-graph.min.js -c -m --preamble \"$(preamble)\"",
+    "minify": "uglifyjs dist/3d-force-graph.js -o dist/3d-force-graph.min.js -c -m",
     "prepublish": "npm run build && npm run minify"
   },
   "dependencies": {
