@@ -46127,6 +46127,17 @@ function validateSubject(subject) {
   }
 }
 
+/**
+ * @fileOverview Contains definition of the core graph object.
+ */
+
+/**
+ * @example
+ *  var graph = require('ngraph.graph')();
+ *  graph.addNode(1);     // graph has one node.
+ *  graph.addLink(2, 3);  // now graph contains three nodes and one link.
+ *
+ */
 var index$1 = createGraph;
 
 var eventify = index$2;
@@ -46953,6 +46964,13 @@ var isSamePosition = function isSamePosition(point1, point2) {
     return (dx < 1e-8 && dy < 1e-8);
 };
 
+/**
+ * This is Barnes Hut simulation algorithm for 2d case. Implementation
+ * is highly optimized (avoids recusion and gc pressure)
+ *
+ * http://www.cs.princeton.edu/courses/archive/fall03/cs126/assignments/barnes-hut.html
+ */
+
 var index$11 = function(options) {
   options = options || {};
   options.gravity = typeof options.gravity === 'number' ? options.gravity : -1;
@@ -47355,6 +47373,13 @@ var bounds = function (bodies, settings) {
   }
 };
 
+/**
+ * Represents drag force, which reduces force value on each step by given
+ * coefficient.
+ *
+ * @param {Object} options for the drag force
+ * @param {Number=} options.dragCoeff drag force coefficient. 0.1 by default
+ */
 var dragForce = function (options) {
   var merge = index$9,
       expose = index$7;
@@ -47376,6 +47401,14 @@ var dragForce = function (options) {
   return api;
 };
 
+/**
+ * Represents spring force, which updates forces acting on two bodies, conntected
+ * by a spring.
+ *
+ * @param {Object} options for the spring force
+ * @param {Number=} options.springCoeff spring force coefficient.
+ * @param {Number=} options.springLength desired length of a spring at rest.
+ */
 var springForce = function (options) {
   var merge = index$9;
   var random = index$13.random(42);
@@ -47537,6 +47570,9 @@ var createBody = function(pos) {
   return new physics.Body(pos);
 };
 
+/**
+ * Manages a simulation of physical forces acting on bodies and springs.
+ */
 var index$5 = physicsSimulator;
 
 function physicsSimulator(settings) {
@@ -48267,6 +48303,13 @@ var isSamePosition$2 = function isSamePosition$2(point1, point2) {
     return (dx < 1e-8 && dy < 1e-8);
 };
 
+/**
+ * This is Barnes Hut simulation algorithm for 2d case. Implementation
+ * is highly optimized (avoids recusion and gc pressure)
+ *
+ * http://www.cs.princeton.edu/courses/archive/fall03/cs126/assignments/barnes-hut.html
+ */
+
 var index$22 = function(options) {
   options = options || {};
   options.gravity = typeof options.gravity === 'number' ? options.gravity : -1;
@@ -48666,6 +48709,13 @@ var bounds$2 = function (bodies, settings) {
   }
 };
 
+/**
+ * Represents drag force, which reduces force value on each step by given
+ * coefficient.
+ *
+ * @param {Object} options for the drag force
+ * @param {Number=} options.dragCoeff drag force coefficient. 0.1 by default
+ */
 var dragForce$2 = function (options) {
   var merge = index$9,
       expose = index$7;
@@ -48687,6 +48737,14 @@ var dragForce$2 = function (options) {
   return api;
 };
 
+/**
+ * Represents spring force, which updates forces acting on two bodies, conntected
+ * by a spring.
+ *
+ * @param {Object} options for the spring force
+ * @param {Number=} options.springCoeff spring force coefficient.
+ * @param {Number=} options.springLength desired length of a spring at rest.
+ */
 var springForce$2 = function (options) {
   var merge = index$9;
   var random = index$13.random(42);
@@ -48782,6 +48840,9 @@ var createBody$2 = function(pos) {
   return new physics$1.Body(pos);
 };
 
+/**
+ * Manages a simulation of physical forces acting on bodies and springs.
+ */
 var index$20 = physicsSimulator$1;
 
 function physicsSimulator$1(settings) {
@@ -49466,6 +49527,18 @@ var isSamePosition$4 = function isSamePosition$4(point1, point2) {
     return (dx < 1e-8 && dy < 1e-8 && dz < 1e-8);
 };
 
+/**
+ * This is Barnes Hut simulation algorithm for 3d case. Implementation
+ * is highly optimized (avoids recusion and gc pressure)
+ *
+ * http://www.cs.princeton.edu/courses/archive/fall03/cs126/assignments/barnes-hut.html
+ *
+ * NOTE: This module duplicates a lot of code from 2d case. Primary reason for
+ * this is performance. Every time I tried to abstract away vector operations
+ * I had negative impact on performance. So in this case I'm scarifying code
+ * reuse in favor of speed
+ */
+
 var index$24 = function(options) {
   options = options || {};
   options.gravity = typeof options.gravity === 'number' ? options.gravity : -1;
@@ -49946,6 +50019,13 @@ var bounds$4 = function (bodies, settings) {
   }
 };
 
+/**
+ * Represents 3d drag force, which reduces force value on each step by given
+ * coefficient.
+ *
+ * @param {Object} options for the drag force
+ * @param {Number=} options.dragCoeff drag force coefficient. 0.1 by default
+ */
 var dragForce$4 = function (options) {
   var merge = index$9,
       expose = index$7;
@@ -49968,6 +50048,14 @@ var dragForce$4 = function (options) {
   return api;
 };
 
+/**
+ * Represents 3d spring force, which updates forces acting on two bodies, conntected
+ * by a spring.
+ *
+ * @param {Object} options for the spring force
+ * @param {Number=} options.springCoeff spring force coefficient.
+ * @param {Number=} options.springLength desired length of a spring at rest.
+ */
 var springForce$4 = function (options) {
   var merge = index$9;
   var random = index$13.random(42);
@@ -50092,6 +50180,12 @@ function integrate$3(bodies, timeStep) {
   return (tx * tx + ty * ty + tz * tz)/bodies.length;
 }
 
+/**
+ * This module provides all required forces to regular ngraph.physics.simulator
+ * to make it 3D simulator. Ideally ngraph.physics.simulator should operate
+ * with vectors, but on practices that showed performance decrease... Maybe
+ * I was doing it wrong, will see if I can refactor/throw away this module.
+ */
 var index$17 = createLayout$1;
 createLayout$1.get2dLayout = index$18;
 
@@ -50192,6 +50286,8 @@ function createComponent(config = {}) {
 
 const ngraph = { graph: index$1, forcelayout: index$4, forcelayout3d: index$17 };
 
+//
+
 const CAMERA_DISTANCE2NODES_FACTOR = 150;
 
 var _3dForceGraph = createComponent({
@@ -50231,12 +50327,6 @@ var _3dForceGraph = createComponent({
 	init: (domNode, state) => {
 		// Wipe DOM
 		domNode.innerHTML = '';
-
-		// Add nav info section
-		let navInfo;
-		domNode.appendChild(navInfo = document.createElement('div'));
-		navInfo.className = 'graph-nav-info';
-		navInfo.textContent = "MOVE mouse & press LEFT/A: rotate, MIDDLE/S: zoom, RIGHT/D: pan";
 
 		// Add info space
 		domNode.appendChild(state.infoElem = document.createElement('div'));

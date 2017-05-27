@@ -53,12 +53,6 @@ export default SWC.createComponent({
 		// Wipe DOM
 		domNode.innerHTML = '';
 
-		// Add nav info section
-		let navInfo;
-		domNode.appendChild(navInfo = document.createElement('div'));
-		navInfo.className = 'graph-nav-info';
-		navInfo.textContent = "MOVE mouse & press LEFT/A: rotate, MIDDLE/S: zoom, RIGHT/D: pan";
-
 		// Add info space
 		domNode.appendChild(state.infoElem = document.createElement('div'));
 		state.infoElem.className = 'graph-info-msg';
