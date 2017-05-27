@@ -20,6 +20,6 @@
 
 .graph-tooltip {
     position: absolute;
+    font: 12px Tahoma, Helvetica, Arial, sans-serif;
     color: lavender;
-    font-size: 18px;
 }

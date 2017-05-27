@@ -20,7 +20,7 @@ function __$styleInject(css, returnValue) {
   head.appendChild(style);
   return returnValue;
 }
-__$styleInject(".graph-nav-info {\r\n    position: absolute;\r\n    bottom: 5px;\r\n    width: 100%;\r\n    text-align: center;\r\n    color: slategrey;\r\n    opacity: 0.7;\r\n    font-size: 10px;\r\n}\r\n\r\n.graph-info-msg {\r\n    position: absolute;\r\n    top: 50%;\r\n    width: 100%;\r\n    text-align: center;\r\n    color: lavender;\r\n    opacity: 0.7;\r\n    font-size: 22px;\r\n}\r\n\r\n.graph-tooltip {\r\n    position: absolute;\r\n    color: lavender;\r\n    font-size: 18px;\r\n}",undefined);
+__$styleInject(".graph-nav-info {\r\n    position: absolute;\r\n    bottom: 5px;\r\n    width: 100%;\r\n    text-align: center;\r\n    color: slategrey;\r\n    opacity: 0.7;\r\n    font-size: 10px;\r\n}\r\n\r\n.graph-info-msg {\r\n    position: absolute;\r\n    top: 50%;\r\n    width: 100%;\r\n    text-align: center;\r\n    color: lavender;\r\n    opacity: 0.7;\r\n    font-size: 22px;\r\n}\r\n\r\n.graph-tooltip {\r\n    position: absolute;\r\n    font: 12px Tahoma, Helvetica, Arial, sans-serif;\r\n    color: lavender;\r\n}",undefined);
 
 // Polyfills
 
@@ -50192,6 +50192,8 @@ function createComponent(config = {}) {
 
 const ngraph = { graph: index$1, forcelayout: index$4, forcelayout3d: index$17 };
 
+//
+
 const CAMERA_DISTANCE2NODES_FACTOR = 150;
 
 var _3dForceGraph = createComponent({
@@ -50207,8 +50209,12 @@ var _3dForceGraph = createComponent({
 		new Prop('numDimensions', 3),
 		new Prop('nodeRelSize', 4), // volume per val unit
 		new Prop('lineOpacity', 0.2),
+		new Prop('lineColor', 0xf0f0f0),
+		new Prop('sphereOpacity', 0.6),
+		new Prop('sphereColor', 0xf7f5e9),
 		new Prop('autoColorBy'),
 		new Prop('includeArrows', false),
+		new Prop('highlightItems', false),
 		new Prop('idField', 'id'),
 		new Prop('valField', 'val'),
 		new Prop('nameField', 'name'),
@@ -50218,7 +50224,9 @@ var _3dForceGraph = createComponent({
 		new Prop('forceEngine', 'd3'), // d3 or ngraph
 		new Prop('warmupTicks', 0), // how many times to tick the force engine at init before starting to render
 		new Prop('cooldownTicks', Infinity),
-		new Prop('cooldownTime', 15000) // ms
+		new Prop('cooldownTime', 15000), // ms
+		new Prop('onMouseOver', undefined), // mouse over an object
+		new Prop('onClick', undefined) // click on an object
 	],
 
 	init: (domNode, state) => {
@@ -50256,9 +50264,29 @@ var _3dForceGraph = createComponent({
 			mousePos.x = (relPos.x / state.width) * 2 - 1;
 			mousePos.y = -(relPos.y / state.height) * 2 + 1;
 
+			// Capture active object
+			raycaster.setFromCamera(mousePos, state.camera);
+			mousePos.intersect = raycaster.intersectObjects(state.graphScene.children)
+				.filter(o => o.object) // Check only objects with labels
+				.shift(); // first item
+
 			// Move tooltip
-			toolTipElem.style.top = (relPos.y - 40) + 'px';
-			toolTipElem.style.left = (relPos.x - 20) + 'px';
+			toolTipElem.style.top = (relPos.y - 15) + 'px';
+			toolTipElem.style.left = (relPos.x + 15) + 'px';
+
+			if (state.highlightItems) {
+				resetOpacity();
+				if (mousePos.intersect) {
+					mousePos.intersect.object.material.opacity = 0.9;
+					domNode.style.cursor = 'pointer';
+				} else {
+					domNode.style.cursor = 'default';
+				}
+			}
+
+			if (state.onMouseOver) {
+				state.onMouseOver.call(state, mousePos.intersect);
+			}
 
 			function getOffset(el) {
 				const rect = el.getBoundingClientRect(),
@@ -50268,8 +50296,14 @@ var _3dForceGraph = createComponent({
 			}
 		}, false);
 
+		domNode.addEventListener("click", ev => {
+			if (state.onClick) {
+				state.onClick.call(state, mousePos.intersect);
+			}
+		});
+
 		// Setup renderer
-		state.renderer = new THREE.WebGLRenderer();
+		state.renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true });
 		domNode.appendChild(state.renderer.domElement);
 
 		// Setup scene
@@ -50296,22 +50330,32 @@ var _3dForceGraph = createComponent({
 			.stop();
 
 		//
-
+			//setTimeout(() => state.graphScene.children.forEach(child => console.log(child)),1000);
 		// Kick-off renderer
-		(function animate() { // IIFE
+		(function animate() { // IIFE 
 			if(state.onFrame) state.onFrame();
 
 			// Update tooltip
-			raycaster.setFromCamera(mousePos, state.camera);
-			const intersects = raycaster.intersectObjects(state.graphScene.children)
-				.filter(o => o.object.name); // Check only objects with labels
-			toolTipElem.textContent = intersects.length ? intersects[0].object.name : '';
+			toolTipElem.textContent = mousePos.intersect ?
+											mousePos.intersect.object.name : '';
 
 			// Frame cycle
 			tbControls.update();
 			state.renderer.render(scene, state.camera);
 			requestAnimationFrame(animate);
 		})();
+
+		function resetOpacity() {
+			state.graphScene.children.forEach(child => {
+				if (child) {
+					if (child.type === 'Mesh' && child.geometry instanceof THREE.SphereGeometry) {
+						child.material.opacity = state.sphereOpacity;
+					} else if (child.type === 'Line') {
+						child.material.opacity = state.lineOpacity;
+					}
+				}
+			});
+		}
 	},
 
 	update: function updateFn(state) {
@@ -50346,10 +50390,11 @@ var _3dForceGraph = createComponent({
 		// Add WebGL objects
 		while (state.graphScene.children.length) { state.graphScene.remove(state.graphScene.children[0]); } // Clear the place
 
+		//const sphereMaterial = new THREE.MeshLambertMaterial({ color: state.sphereColor, transparent: true, opacity: state.sphereOpacity });
 		state.graphData.nodes.forEach(node => {
 			const sphere = new THREE.Mesh(
 				new THREE.SphereGeometry(Math.cbrt(node[state.valField] || 1) * state.nodeRelSize, 8, 8),
-				new THREE.MeshLambertMaterial({ color: node[state.colorField] || 0x4f4fbf, transparent: true, opacity: 0.75 })
+				new THREE.MeshLambertMaterial({ color: node[state.colorField] || state.sphereColor, transparent: true, opacity: state.sphereOpacity })
 			);
 
 			sphere.name = node[state.nameField]; // Add label
@@ -50357,17 +50402,18 @@ var _3dForceGraph = createComponent({
 			state.graphScene.add(node.__sphere = sphere);
 		});
 
-		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xf0f0f0, transparent: true, opacity: state.lineOpacity });
-		const arrowMaterial = new THREE.MeshLambertMaterial({ color: 0xf0f0f0, transparent: true, opacity: state.lineOpacity });
+		//const lineMaterial = new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity });
+		const arrowMaterial = new THREE.MeshLambertMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity });
+
 		state.graphData.links.forEach(link => {
 			const geometry = new THREE.BufferGeometry();
 			geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
-			const line = new THREE.Line(geometry, lineMaterial);
+			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
 
 			if (state.includeArrows) {
-				const arrow = new THREE.ArrowHelper(new THREE.Vector3(), new THREE.Vector3(), 0, 0xf0f0f0);
+				const arrow = new THREE.ArrowHelper(new THREE.Vector3(), new THREE.Vector3(), 0, state.lineColor);
 				arrow.cone.material = arrowMaterial;
 				//arrow.line.material = lineMaterial;
 				state.graphScene.add(link.__arrow = arrow);
@@ -50409,8 +50455,6 @@ var _3dForceGraph = createComponent({
 		state.onFrame = layoutTick;
 		state.infoElem.textContent = '';
 
-		//
-
 		function resizeCanvas() {
 			if (state.width && state.height) {
 				state.renderer.setSize(state.width, state.height);
@@ -50422,17 +50466,6 @@ var _3dForceGraph = createComponent({
 		function layoutTick() {
 			if (cntTicks++ > state.cooldownTicks || (new Date()) - startTickTime > state.cooldownTime) {
 				state.onFrame = null; // Stop ticking graph
-				console.log('DONE!');
-				/*state.graphData.links.forEach(link => {
-					let line = link.__line;
-					let linePos = line.geometry.attributes.position;
-					let dir = new THREE.Vector3(...linePos.array.slice(3));
-					//dir.normalize();
-					let origin = new THREE.Vector3(...linePos.array.slice(0, 3));
-					let arrowHelper = new THREE.ArrowHelper(dir, origin, dir.length(), 0xf0f0f0);
-					state.scene.add(arrowHelper);
-					console.log({line, linePos });
-				});*/
 			}
 
 			layout[isD3Sim?'tick':'step'](); // Tick it
