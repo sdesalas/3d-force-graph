@@ -28,7 +28,7 @@ export default SWC.createComponent({
 		new SWC.Prop('numDimensions', 3),
 		new SWC.Prop('nodeRelSize', 4), // volume per val unit
 		new SWC.Prop('lineOpacity', 0.2),
-		new SWC.Prop('lineColor', 0xf0f0f0),
+		new SWC.Prop('lineColor', 0xffffff),
 		new SWC.Prop('sphereOpacity', 0.6),
 		new SWC.Prop('sphereColor', 0xf7f5e9),
 		new SWC.Prop('autoColorBy'),
@@ -40,6 +40,7 @@ export default SWC.createComponent({
 		new SWC.Prop('colorField', 'color'),
 		new SWC.Prop('linkSourceField', 'source'),
 		new SWC.Prop('linkTargetField', 'target'),
+		new SWC.Prop('linkOpacityField', 'opacity'),
 		new SWC.Prop('forceEngine', 'd3'), // d3 or ngraph
 		new SWC.Prop('warmupTicks', 0), // how many times to tick the force engine at init before starting to render
 		new SWC.Prop('cooldownTicks', Infinity),
@@ -197,6 +198,7 @@ export default SWC.createComponent({
 		state.graphData.links.forEach(link => {
 			link.source = link[state.linkSourceField];
 			link.target = link[state.linkTargetField];
+			link.opacity = link[state.linkOpacityField];
 		});
 
 		// Add WebGL objects
@@ -220,7 +222,7 @@ export default SWC.createComponent({
 		state.graphData.links.forEach(link => {
 			const geometry = new THREE.BufferGeometry();
 			geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
-			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity }));
+			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: link.opacity || state.lineOpacity }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
 

@@ -50315,6 +50315,7 @@ var _3dForceGraph = createComponent({
 		new Prop('colorField', 'color'),
 		new Prop('linkSourceField', 'source'),
 		new Prop('linkTargetField', 'target'),
+		new Prop('linkOpacityField', 'opacity'),
 		new Prop('forceEngine', 'd3'), // d3 or ngraph
 		new Prop('warmupTicks', 0), // how many times to tick the force engine at init before starting to render
 		new Prop('cooldownTicks', Infinity),
@@ -50472,6 +50473,7 @@ var _3dForceGraph = createComponent({
 		state.graphData.links.forEach(link => {
 			link.source = link[state.linkSourceField];
 			link.target = link[state.linkTargetField];
+			link.opacity = link[state.linkOpacityField];
 		});
 
 		// Add WebGL objects
@@ -50495,7 +50497,7 @@ var _3dForceGraph = createComponent({
 		state.graphData.links.forEach(link => {
 			const geometry = new THREE.BufferGeometry();
 			geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
-			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity }));
+			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: link.opacity || state.lineOpacity }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
 
