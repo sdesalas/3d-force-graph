@@ -50303,7 +50303,7 @@ var _3dForceGraph = createComponent({
 		new Prop('numDimensions', 3),
 		new Prop('nodeRelSize', 4), // volume per val unit
 		new Prop('lineOpacity', 0.2),
-		new Prop('lineColor', 0xf0f0f0),
+		new Prop('lineColor', 0xffffff),
 		new Prop('sphereOpacity', 0.6),
 		new Prop('sphereColor', 0xf7f5e9),
 		new Prop('autoColorBy'),
