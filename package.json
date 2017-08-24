@@ -25,10 +25,11 @@
     "url": "https://github.com/vasturiano/3d-force-graph/issues"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && rollup -c",
+    "build": "npm run rollup && npm run minify",
+    "rollup": "rm -rf dist && mkdir dist && rollup -c",
     "watch": "rollup -c -w",
     "minify": "uglifyjs dist/3d-force-graph.js -o dist/3d-force-graph.min.js -c -m",
-    "prepublish": "npm run build && npm run minify",
+    "prepublish": "npm run build",
     "generatessl": "openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj \"//CN=localhost\"",
     "servessl": "http-server -p 8443 -S"
   },

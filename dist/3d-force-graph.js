@@ -50482,7 +50482,7 @@ var _3dForceGraph = createComponent({
 		//const sphereMaterial = new THREE.MeshLambertMaterial({ color: state.sphereColor, transparent: true, opacity: state.sphereOpacity });
 		state.graphData.nodes.forEach(node => {
 			const sphere = new THREE.Mesh(
-				new THREE.SphereGeometry(Math.cbrt(node[state.valField] || 1) * state.nodeRelSize, 4, 4),
+				new THREE.SphereGeometry(Math.cbrt(node[state.valField] || 1) * state.nodeRelSize, 3, 4),
 				new THREE.MeshLambertMaterial({ color: node[state.colorField] || state.sphereColor, transparent: true, opacity: state.sphereOpacity })
 			);
 
