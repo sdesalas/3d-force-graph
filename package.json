@@ -33,26 +33,24 @@
     "generatessl": "openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj \"//CN=localhost\"",
     "servessl": "http-server -p 8443 -S"
   },
-  "dependencies": {
+  "devDependencies": {
     "d3-binarytree": "^0.1",
     "d3-force-3d": "^1.0",
     "d3-octree": "^0.1",
     "ngraph.forcelayout": "~0.1.2",
     "ngraph.forcelayout3d": "~0.0.16",
     "ngraph.graph": "~0.0.12",
-    "qwest": "^4.4",
-    "swc": "^0.2",
-    "three": "~0.84"
-  },
-  "devDependencies": {
     "package-preamble": "^0.0.2",
     "postcss-nested": "^1.0",
     "postcss-simple-vars": "^3.0",
+    "qwest": "^4.4",
     "rollup": "^0.36",
     "rollup-plugin-commonjs": "^5.0",
     "rollup-plugin-node-resolve": "^2.0",
     "rollup-plugin-postcss": "^0.2",
     "rollup-watch": "^2.5",
+    "swc": "^0.2",
+    "three": "~0.84",
     "uglify-js-es6": "^2.8.9"
   }
 }
