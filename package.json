@@ -6,9 +6,9 @@
   "jsnext:main": "src/index",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vasturiano/3d-force-graph.git"
+    "url": "git+https://github.com/sdesalas/3d-force-graph.git"
   },
-  "homepage": "https://github.com/vasturiano/3d-force-graph",
+  "homepage": "https://github.com/sdesalas/3d-force-graph",
   "keywords": [
     "3d",
     "force",
@@ -17,12 +17,8 @@
     "ngraph",
     "webgl"
   ],
-  "author": {
-    "name": "Vasco Asturiano",
-    "url": "http://bl.ocks.org/vasturiano"
-  },
   "bugs": {
-    "url": "https://github.com/vasturiano/3d-force-graph/issues"
+    "url": "https://github.com/sdesalas/3d-force-graph/issues"
   },
   "scripts": {
     "build": "npm run rollup && npm run minify",
