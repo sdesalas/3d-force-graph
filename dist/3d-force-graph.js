@@ -50303,9 +50303,10 @@ var _3dForceGraph = createComponent({
 		new Prop('numDimensions', 3),
 		new Prop('nodeRelSize', 4), // volume per val unit
 		new Prop('lineOpacity', 0.2),
-		new Prop('lineColor', 0xffffff),
+		new Prop('lineColor', 0xccfffb),
+		new Prop('lineColorNeg', 0xff7575),
 		new Prop('sphereOpacity', 0.6),
-		new Prop('sphereColor', 0xf7f5e9),
+		new Prop('sphereColor', 0xccfffb),
 		new Prop('autoColorBy'),
 		new Prop('includeArrows', false),
 		new Prop('highlightItems', false),
@@ -50493,11 +50494,14 @@ var _3dForceGraph = createComponent({
 
 		//const lineMaterial = new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity });
 		const arrowMaterial = new THREE.MeshLambertMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity });
-
+		
 		state.graphData.links.forEach(link => {
 			const geometry = new THREE.BufferGeometry();
+			const opacity = link.opacity || state.lineOpacity;
+			const color = opacity > 0 ? state.lineColor : state.lineColorNeg;
 			geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
-			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: link.opacity || state.lineOpacity }));
+
+			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity) }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
 

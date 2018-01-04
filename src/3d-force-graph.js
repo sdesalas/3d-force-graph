@@ -28,9 +28,10 @@ export default SWC.createComponent({
 		new SWC.Prop('numDimensions', 3),
 		new SWC.Prop('nodeRelSize', 4), // volume per val unit
 		new SWC.Prop('lineOpacity', 0.2),
-		new SWC.Prop('lineColor', 0xffffff),
+		new SWC.Prop('lineColor', 0xccfffb),
+		new SWC.Prop('lineColorNeg', 0xff7575),
 		new SWC.Prop('sphereOpacity', 0.6),
-		new SWC.Prop('sphereColor', 0xf7f5e9),
+		new SWC.Prop('sphereColor', 0xccfffb),
 		new SWC.Prop('autoColorBy'),
 		new SWC.Prop('includeArrows', false),
 		new SWC.Prop('highlightItems', false),
@@ -218,11 +219,14 @@ export default SWC.createComponent({
 
 		//const lineMaterial = new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity });
 		const arrowMaterial = new THREE.MeshLambertMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity });
-
+		
 		state.graphData.links.forEach(link => {
 			const geometry = new THREE.BufferGeometry();
+			const opacity = link.opacity || state.lineOpacity;
+			const color = opacity > 0 ? state.lineColor : state.lineColorNeg;
 			geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
-			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: link.opacity || state.lineOpacity }));
+
+			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity) }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
 
