@@ -50213,48 +50213,48 @@ function getIntegrator(physicsSettings) {
 
 const ngraph = { graph: index$1, forcelayout: index$4, forcelayout3d: index$17 };
 
-//
-
 const CAMERA_DISTANCE2NODES_FACTOR = 150;
+
+const defaults = {
+	width: window.innerWidth,
+	height: window.innerHeight,
+	jsonUrl: undefined,
+	graphData: {
+		nodes: [],
+		links: []
+	},
+	numDimensions: 3,
+	nodeRelSize: 4, // volume per val unit
+	lineOpacity: 0.2,
+	lineColor: 0xccfffb,
+	lineColorNeg: 0xff7575,
+	sphereOpacity: 0.6,
+	sphereColor: 0xccfffb,
+	autoColorBy: undefined,
+	includeArrows: false,
+	highlightItems: false,
+	idField: 'id',
+	valField: 'val',
+	nameField: 'name',
+	colorField: 'color',
+	linkSourceField: 'source',
+	linkTargetField: 'target',
+	linkOpacityField: 'opacity',
+	forceEngine: 'd3', // d3 or ngraph
+	warmupTicks: 0, // how many times to tick the force engine at init before starting to render
+	cooldownTicks: Infinity,
+	cooldownTime: 15000, // ms
+	onMouseOver: undefined, // mouse over an object
+	onClick: undefined, // click on an object
+	onReady: undefined // initialised
+};
 
 class ForceGraph3D {
 
 	constructor (domNode, opts) {
 
-		// defaults
-		Object.assign(this, {
-			width: window.innerWidth,
-			height: window.innerHeight,
-			jsonUrl: undefined,
-			graphData: {
-				nodes: [],
-				links: []
-			},
-			numDimensions: 3,
-			nodeRelSize: 4, // volume per val unit
-			lineOpacity: 0.2,
-			lineColor: 0xccfffb,
-			lineColorNeg: 0xff7575,
-			sphereOpacity: 0.6,
-			sphereColor: 0xccfffb,
-			autoColorBy: undefined,
-			includeArrows: false,
-			highlightItems: false,
-			idField: 'id',
-			valField: 'val',
-			nameField: 'name',
-			colorField: 'color',
-			linkSourceField: 'source',
-			linkTargetField: 'target',
-			linkOpacityField: 'opacity',
-			forceEngine: 'd3', // d3 or ngraph
-			warmupTicks: 0, // how many times to tick the force engine at init before starting to render
-			cooldownTicks: Infinity,
-			cooldownTime: 15000, // ms
-			onMouseOver: undefined, // mouse over an object
-			onClick: undefined, // click on an object
-			onReady: undefined // initialised
-		}, opts);
+		// Apply options and defaults
+		Object.assign(this, defaults, opts);
 
 		// Wipe DOM
 		domNode.innerHTML = '';
