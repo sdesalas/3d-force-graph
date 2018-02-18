@@ -50211,140 +50211,69 @@ function getIntegrator(physicsSettings) {
   return eulerIntegrator$4
 }
 
-class Prop {
-	constructor(name, initVal = null, redigest = true, onChange = newVal => {}) {
-		this.name = name;
-		this.initVal = initVal;
-		this.redigest = redigest;
-		this.onChange = onChange;
-	}
-}
-
-function createComponent(config = {}) {
-	const props = config.props || [];
-	const initFn = config.init || (() => {});
-	const updateFn = config.update || (() => {});
-
-	return function() {
-
-		// Holds component state
-		let state = {
-			initialised: false
-		};
-
-		// Component constructor
-		function comp(nodeElement) {
-			initStatic(nodeElement);
-			digest();
-
-			return comp;
-		}
-
-		// Getter/setter methods
-		props.forEach(prop => {
-			comp[prop.name] = getSetProp(prop.name, prop.redigest, prop.onChange);
-			state[prop.name] = prop.initVal;
-			prop.onChange(prop.initVal);
-
-			function getSetProp(prop, redigest = false,  onChange = newVal => {}) {
-				return _ => {
-					if (!arguments.length) { return state[prop] }
-					state[prop] = _;
-					onChange(_);
-					if (redigest) { digest(); }
-					return comp;
-				}
-			}
-		});
-
-		// Reset all component props to their default value
-		comp.resetProps = function() {
-			props.forEach(prop => {
-				state[prop.name] = prop.initVal;
-				prop.onChange(prop.initVal);
-			});
-			digest();	// Re-digest after resetting props
-
-			return comp;
-		};
-
-		//
-
-		function initStatic(nodeElement) {
-			initFn(nodeElement, state);
-			state.initialised = true;
-		}
-
-		function digest() {
-			if (!state.initialised) { return; }
-			updateFn(state);
-		}
-
-		return comp;
-	}
-}
-
 const ngraph = { graph: index$1, forcelayout: index$4, forcelayout3d: index$17 };
 
 //
 
 const CAMERA_DISTANCE2NODES_FACTOR = 150;
 
-var _3dForceGraph = createComponent({
+class ForceGraph3D {
 
-	props: [
-		new Prop('width', window.innerWidth),
-		new Prop('height', window.innerHeight),
-		new Prop('jsonUrl'),
-		new Prop('graphData', {
-			nodes: [],
-			links: []
-		}),
-		new Prop('numDimensions', 3),
-		new Prop('nodeRelSize', 4), // volume per val unit
-		new Prop('lineOpacity', 0.2),
-		new Prop('lineColor', 0xccfffb),
-		new Prop('lineColorNeg', 0xff7575),
-		new Prop('sphereOpacity', 0.6),
-		new Prop('sphereColor', 0xccfffb),
-		new Prop('autoColorBy'),
-		new Prop('includeArrows', false),
-		new Prop('highlightItems', false),
-		new Prop('idField', 'id'),
-		new Prop('valField', 'val'),
-		new Prop('nameField', 'name'),
-		new Prop('colorField', 'color'),
-		new Prop('linkSourceField', 'source'),
-		new Prop('linkTargetField', 'target'),
-		new Prop('linkOpacityField', 'opacity'),
-		new Prop('forceEngine', 'd3'), // d3 or ngraph
-		new Prop('warmupTicks', 0), // how many times to tick the force engine at init before starting to render
-		new Prop('cooldownTicks', Infinity),
-		new Prop('cooldownTime', 15000), // ms
-		new Prop('onMouseOver', undefined), // mouse over an object
-		new Prop('onClick', undefined), // click on an object
-		new Prop('onReady', undefined) // initialised
-	],
+	constructor (domNode, opts) {
 
-	init: (domNode, state) => {
+		// defaults
+		Object.assign(this, {
+			width: window.innerWidth,
+			height: window.innerHeight,
+			jsonUrl: undefined,
+			graphData: {
+				nodes: [],
+				links: []
+			},
+			numDimensions: 3,
+			nodeRelSize: 4, // volume per val unit
+			lineOpacity: 0.2,
+			lineColor: 0xccfffb,
+			lineColorNeg: 0xff7575,
+			sphereOpacity: 0.6,
+			sphereColor: 0xccfffb,
+			autoColorBy: undefined,
+			includeArrows: false,
+			highlightItems: false,
+			idField: 'id',
+			valField: 'val',
+			nameField: 'name',
+			colorField: 'color',
+			linkSourceField: 'source',
+			linkTargetField: 'target',
+			linkOpacityField: 'opacity',
+			forceEngine: 'd3', // d3 or ngraph
+			warmupTicks: 0, // how many times to tick the force engine at init before starting to render
+			cooldownTicks: Infinity,
+			cooldownTime: 15000, // ms
+			onMouseOver: undefined, // mouse over an object
+			onClick: undefined, // click on an object
+			onReady: undefined // initialised
+		}, opts);
+
 		// Wipe DOM
 		domNode.innerHTML = '';
 
 		// Add info space
-		domNode.appendChild(state.infoElem = document.createElement('div'));
-		state.infoElem.className = 'graph-info-msg';
-		state.infoElem.textContent = '';
+		domNode.appendChild(this.infoElem = document.createElement('div'));
+		this.infoElem.className = 'graph-info-msg';
+		this.infoElem.textContent = '';
 
 		// Setup tooltip
-		const toolTipElem = document.createElement('div');
-		toolTipElem.classList.add('graph-tooltip');
-		domNode.appendChild(toolTipElem);
+		this.toolTipElem = document.createElement('div');
+		this.toolTipElem.classList.add('graph-tooltip');
+		domNode.appendChild(this.toolTipElem);
 
 		// Capture mouse coords on move
 		const raycaster = new THREE.Raycaster();
-		const mousePos = new THREE.Vector2();
-		mousePos.x = -2; // Initialize off canvas
-		mousePos.y = -2;
+		this.mousePos = new THREE.Vector2();
+		this.mousePos.x = -2; // Initialize off canvas
+		this.mousePos.y = -2;
 		domNode.addEventListener("mousemove", ev => {
 			// update the mouse pos
 			const offset = getOffset(domNode),
@@ -50352,31 +50281,31 @@ var _3dForceGraph = createComponent({
 					x: ev.pageX - offset.left,
 					y: ev.pageY - offset.top
 				};
-			mousePos.x = (relPos.x / state.width) * 2 - 1;
-			mousePos.y = -(relPos.y / state.height) * 2 + 1;
+			this.mousePos.x = (relPos.x / this.width) * 2 - 1;
+			this.mousePos.y = -(relPos.y / this.height) * 2 + 1;
 
 			// Capture active object
-			raycaster.setFromCamera(mousePos, state.camera);
-			mousePos.intersect = raycaster.intersectObjects(state.graphScene.children)
+			raycaster.setFromCamera(this.mousePos, this.camera);
+			this.mousePos.intersect = raycaster.intersectObjects(this.graphScene.children)
 				.filter(o => o.object) // Check only objects with labels
 				.shift(); // first item
 
 			// Move tooltip
-			toolTipElem.style.top = (relPos.y - 15) + 'px';
-			toolTipElem.style.left = (relPos.x + 15) + 'px';
+			this.toolTipElem.style.top = (relPos.y - 15) + 'px';
+			this.toolTipElem.style.left = (relPos.x + 15) + 'px';
 
-			if (state.highlightItems) {
-				resetOpacity();
-				if (mousePos.intersect) {
-					mousePos.intersect.object.material.opacity = 0.9;
+			if (this.highlightItems) {
+				this.resetOpacity();
+				if (this.mousePos.intersect) {
+					this.mousePos.intersect.object.material.opacity = 0.9;
 					domNode.style.cursor = 'pointer';
 				} else {
 					domNode.style.cursor = 'default';
 				}
 			}
 
-			if (state.onMouseOver) {
-				state.onMouseOver.call(state, mousePos.intersect);
+			if (this.onMouseOver) {
+				this.onMouseOver.call(this, this.mousePos.intersect);
 			}
 
 			function getOffset(el) {
@@ -50388,251 +50317,261 @@ var _3dForceGraph = createComponent({
 		}, false);
 
 		domNode.addEventListener("click", ev => {
-			if (state.onClick) {
-				state.onClick.call(state, mousePos.intersect);
+			if (this.onClick) {
+				this.onClick.call(this, this.mousePos.intersect);
 			}
 		});
 
 		// Setup renderer
-		state.renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true });
-		domNode.appendChild(state.renderer.domElement);
+		this.renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true });
+		domNode.appendChild(this.renderer.domElement);
 
 		// Setup scene
-		const scene = new THREE.Scene();
-		scene.background = new THREE.Color(0x0000A);
-		scene.add(state.graphScene = new THREE.Group());
+		this.scene = new THREE.Scene();
+		this.scene.background = new THREE.Color(0x0000A);
+		this.scene.add(this.graphScene = new THREE.Group());
 
 		// Add lights
-		scene.add(new THREE.AmbientLight(0xbbbbbb));
-		scene.add(new THREE.DirectionalLight(0xffffff, 0.6));
+		this.scene.add(new THREE.AmbientLight(0xbbbbbb));
+		this.scene.add(new THREE.DirectionalLight(0xffffff, 0.6));
 
 		// Setup camera
-		state.camera = new THREE.PerspectiveCamera();
-		state.camera.far = 20000;
+		this.camera = new THREE.PerspectiveCamera();
+		this.camera.far = 20000;
 
 		// Add camera interaction
-		const tbControls = new THREE.TrackballControls(state.camera, state.renderer.domElement);
+		this.tbControls = new THREE.TrackballControls(this.camera, this.renderer.domElement);
 
 		// Add D3 force-directed layout
-		state.d3ForceLayout = simulation()
+		this.d3ForceLayout = simulation()
 			.force('link', link())
 			.force('charge', manyBody())
 			.force('center', center())
 			.stop();
 
 		// Kick-off renderer
-		(function animate() { // IIFE
-			if(state.onFrame) state.onFrame();
+		this.animate();
 
-			// Update tooltip
-			toolTipElem.textContent = mousePos.intersect ?
-											mousePos.intersect.object.name : '';
+		// Kick off
+		this.update();
+	}
 
-			// Frame cycle
-			tbControls.update();
-			state.renderer.render(scene, state.camera);
-			requestAnimationFrame(animate);
-		})();
+	animate() { // IIFE
+		if(this.onFrame) this.onFrame();
 
-		function resetOpacity() {
-			state.graphScene.children.forEach(child => {
-				if (child) {
-					if (child.type === 'Mesh' && child.geometry instanceof THREE.SphereGeometry) {
-						child.material.opacity = state.sphereOpacity;
-					} else if (child.type === 'Line') {
-						child.material.opacity = state.lineOpacity;
-					}
+		// Update tooltip
+		this.toolTipElem.textContent = this.mousePos.intersect ?
+										this.mousePos.intersect.object.name : '';
+
+		// Frame cycle
+		this.tbControls.update();
+		this.renderer.render(this.scene, this.camera);
+		requestAnimationFrame(() => this.animate());
+	}
+
+	resetOpacity() {
+		this.graphScene.children.forEach(child => {
+			if (child) {
+				if (child.type === 'Mesh' && child.geometry instanceof THREE.SphereGeometry) {
+					child.material.opacity = this.sphereOpacity;
+				} else if (child.type === 'Line') {
+					child.material.opacity = this.lineOpacity;
 				}
-			});
+			}
+		});
+	}
+
+	update() {
+
+		this.resizeCanvas();
+
+		this.onFrame = null; // Pause simulation
+		this.infoElem.textContent = 'Loading...';
+
+		if (this.graphData.nodes.length || this.graphData.links.length) {
+			console.info('3d-force-graph loading', this.graphData.nodes.length + ' nodes', this.graphData.links.length + ' links');
 		}
-	},
 
-	update: function updateFn(state) {
-		resizeCanvas();
-
-		state.onFrame = null; // Pause simulation
-		state.infoElem.textContent = 'Loading...';
-
-		if (state.graphData.nodes.length || state.graphData.links.length) {
-			console.info('3d-force-graph loading', state.graphData.nodes.length + ' nodes', state.graphData.links.length + ' links');
-		}
-
-		if (!state.fetchingJson && state.jsonUrl && !state.graphData.nodes.length && !state.graphData.links.length) {
+		if (!this.fetchingJson && this.jsonUrl && !this.graphData.nodes.length && !this.graphData.links.length) {
 			// (Re-)load data
-			state.fetchingJson = true;
-			qwest.get(state.jsonUrl).then((_, json) => {
-				state.fetchingJson = false;
-				state.graphData = json;
-				updateFn(state);  // Force re-update
+			this.fetchingJson = true;
+			qwest.get(this.jsonUrl).then((_, json) => {
+				this.fetchingJson = false;
+				this.graphData = json;
+				this.update();  // Force re-update
 			});
 		}
 
 		// Auto add color to uncolored nodes
-		autoColorNodes(state.graphData.nodes, state.autoColorBy, state.colorField);
+		this.autoColorNodes(this.graphData.nodes, this.autoColorBy, this.colorField);
 
 		// parse links
-		state.graphData.links.forEach(link => {
-			link.source = link[state.linkSourceField];
-			link.target = link[state.linkTargetField];
-			link.opacity = link[state.linkOpacityField];
+		this.graphData.links.forEach(link => {
+			link.source = link[this.linkSourceField];
+			link.target = link[this.linkTargetField];
+			link.opacity = link[this.linkOpacityField];
 		});
 
 		// Add WebGL objects
-		while (state.graphScene.children.length) { state.graphScene.remove(state.graphScene.children[0]); } // Clear the place
+		while (this.graphScene.children.length) { this.graphScene.remove(this.graphScene.children[0]); } // Clear the place
 
-		//const sphereMaterial = new THREE.MeshLambertMaterial({ color: state.sphereColor, transparent: true, opacity: state.sphereOpacity });
-		state.graphData.nodes.forEach(node => {
+		//const sphereMaterial = new THREE.MeshLambertMaterial({ color: this.sphereColor, transparent: true, opacity: this.sphereOpacity });
+		this.graphData.nodes.forEach(node => {
 			const sphere = new THREE.Mesh(
-				new THREE.SphereGeometry(Math.cbrt(node[state.valField] || 1) * state.nodeRelSize, 3, 4),
-				new THREE.MeshLambertMaterial({ color: node[state.colorField] || state.sphereColor, transparent: true, opacity: state.sphereOpacity })
+				new THREE.SphereGeometry(Math.cbrt(node[this.valField] || 1) * this.nodeRelSize, 3, 4),
+				new THREE.MeshLambertMaterial({ color: node[this.colorField] || this.sphereColor, transparent: true, opacity: this.sphereOpacity })
 			);
 
-			sphere.name = node[state.nameField]; // Add label
+			sphere.name = node[this.nameField]; // Add label
 
-			state.graphScene.add(node.__sphere = sphere);
+			this.graphScene.add(node.__sphere = sphere);
 		});
 
-		//const lineMaterial = new THREE.LineBasicMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity });
-		const arrowMaterial = new THREE.MeshLambertMaterial({ color: state.lineColor, transparent: true, opacity: state.lineOpacity });
+		//const lineMaterial = new THREE.LineBasicMaterial({ color: this.lineColor, transparent: true, opacity: this.lineOpacity });
+		const arrowMaterial = new THREE.MeshLambertMaterial({ color: this.lineColor, transparent: true, opacity: this.lineOpacity });
 		
-		state.graphData.links.forEach(link => {
+		this.graphData.links.forEach(link => {
 			const geometry = new THREE.BufferGeometry();
-			const opacity = link.opacity || state.lineOpacity;
-			const color = opacity > 0 ? state.lineColor : state.lineColorNeg;
+			const opacity = link.opacity || this.lineOpacity;
+			const color = opacity > 0 ? this.lineColor : this.lineColorNeg;
 			geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
 
 			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity) }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
 
-			if (state.includeArrows) {
-				const arrow = new THREE.ArrowHelper(new THREE.Vector3(), new THREE.Vector3(), 0, state.lineColor);
+			if (this.includeArrows) {
+				const arrow = new THREE.ArrowHelper(new THREE.Vector3(), new THREE.Vector3(), 0, this.lineColor);
 				arrow.cone.material = arrowMaterial;
 				//arrow.line.material = lineMaterial;
-				state.graphScene.add(link.__arrow = arrow);
+				this.graphScene.add(link.__arrow = arrow);
 			}
 
-			state.graphScene.add(link.__line = line);
+			this.graphScene.add(link.__line = line);
 
 		});
 
-		state.camera.lookAt(state.graphScene.position);
-		state.camera.position.z = Math.cbrt(state.graphData.nodes.length) * CAMERA_DISTANCE2NODES_FACTOR;
+		this.camera.lookAt(this.graphScene.position);
+		this.camera.position.z = Math.cbrt(this.graphData.nodes.length) * CAMERA_DISTANCE2NODES_FACTOR;
 
 		// Feed data to force-directed layout
-		const isD3Sim = state.forceEngine !== 'ngraph';
-		let layout;
+		const isD3Sim = this.forceEngine !== 'ngraph';
 		if (isD3Sim) {
 			// D3-force
-			(layout = state.d3ForceLayout)
+			(this.layout = this.d3ForceLayout)
 				.stop()
 				.alpha(1)// re-heat the simulation
-				.numDimensions(state.numDimensions)
-				.nodes(state.graphData.nodes)
+				.numDimensions(this.numDimensions)
+				.nodes(this.graphData.nodes)
 				.force('link')
-					.id(d => d[state.idField])
-					.links(state.graphData.links);
+					.id(d => d[this.idField])
+					.links(this.graphData.links);
 		} else {
 			// ngraph
 			const graph = ngraph.graph();
-			state.graphData.nodes.forEach(node => { graph.addNode(node[state.idField]); });
-			state.graphData.links.forEach(link => { graph.addLink(link.source, link.target); });
-			layout = ngraph['forcelayout' + (state.numDimensions === 2 ? '' : '3d')](graph);
-			layout.graph = graph; // Attach graph reference to layout
+			this.graphData.nodes.forEach(node => { graph.addNode(node[this.idField]); });
+			this.graphData.links.forEach(link => { graph.addLink(link.source, link.target); });
+			this.layout = ngraph['forcelayout' + (this.numDimensions === 2 ? '' : '3d')](graph);
+			this.layout.graph = graph; // Attach graph reference to layout
 		}
 
-		for (let i=0; i<state.warmupTicks; i++) { layout[isD3Sim?'tick':'step'](); } // Initial ticks before starting to render
+		for (let i=0; i<this.warmupTicks; i++) { 
+			this.layout[isD3Sim?'tick':'step'](); // Initial ticks before starting to render
+		} 
 
-		let cntTicks = 0;
-		const startTickTime = new Date();
-		state.onFrame = layoutTick;
-		state.infoElem.textContent = '';
+		this.layoutTickCount = 0;
+		this.layoutStartTickTime = new Date();
+		this.onFrame = () => this.layoutTick();
+		this.infoElem.textContent = '';
 
 		// Ready
-		if (state.onReady) {
-			state.onReady(state);
-		}
-
-		function resizeCanvas() {
-			if (state.width && state.height) {
-				state.renderer.setSize(state.width, state.height);
-				state.camera.aspect = state.width/state.height;
-				state.camera.updateProjectionMatrix();
-			}
-		}
-
-		function layoutTick() {
-			if (cntTicks++ > state.cooldownTicks || (new Date()) - startTickTime > state.cooldownTime) {
-				state.onFrame = null; // Stop ticking graph
-			}
-
-			layout[isD3Sim?'tick':'step'](); // Tick it
-
-			// Update nodes position
-			state.graphData.nodes.forEach(node => {
-				const sphere = node.__sphere,
-					pos = isD3Sim ? node : layout.getNodePosition(node[state.idField]);
-
-				sphere.position.x = pos.x;
-				sphere.position.y = pos.y || 0;
-				sphere.position.z = pos.z || 0;
-			});
-
-			// Update links position
-			state.graphData.links.forEach(link => {
-				const line = link.__line,
-					arrow = link.__arrow,
-					pos = isD3Sim
-						? link
-						: layout.getLinkPosition(layout.graph.getLink(link.source, link.target).id);
-				let start = pos[isD3Sim ? 'source' : 'from'];
-				let end = pos[isD3Sim ? 'target' : 'to'];
-				let linePos = line.geometry.attributes.position;
-
-				linePos.array[0] = start.x;
-				linePos.array[1] = start.y || 0;
-				linePos.array[2] = start.z || 0;
-				linePos.array[3] = end.x;
-				linePos.array[4] = end.y || 0;
-				linePos.array[5] = end.z || 0;
-				linePos.needsUpdate = true;
-				line.geometry.computeBoundingSphere();
-
-				if (arrow) {
-					start.y = start.y || 0;
-					start.z = start.z || 0;
-					end.y = end.y || 0;
-					end.z = end.z || 0;
-					let boundingSphere = line.geometry.boundingSphere;
-					//arrow.position.copy(end);
-					arrow.position.copy(boundingSphere.center);
-
-					arrow.setDirection(new THREE.Vector3(0,0,0).copy(end).sub(start).normalize());
-					arrow.setLength(0, 4, 2);
-				}
-
-			});
-		}
-
-		function autoColorNodes(nodes, colorBy, colorField) {
-			if (!colorBy) return;
-
-			// Color brewer paired set
-			const colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'];
-
-			const uncoloredNodes = nodes.filter(node => !node[colorField]),
-				nodeGroups = {};
-
-			uncoloredNodes.forEach(node => { nodeGroups[node[colorBy]] = null; });
-			Object.keys(nodeGroups).forEach((group, idx) => { nodeGroups[group] = idx; });
-
-			uncoloredNodes.forEach(node => {
-				node[colorField] = parseInt(colors[nodeGroups[node[colorBy]] % colors.length].slice(1), 16);
-			});
+		if (this.onReady) {
+			this.onReady(this);
 		}
 	}
-});
 
-return _3dForceGraph;
+	resizeCanvas() {
+		if (this.width && this.height) {
+			this.renderer.setSize(this.width, this.height);
+			this.camera.aspect = this.width/this.height;
+			this.camera.updateProjectionMatrix();
+		}
+	}
+
+	layoutTick() {
+
+		const layout = this.layout;
+		const isD3Sim = this.forceEngine !== 'ngraph';
+		if (this.layoutTickCount++ > this.cooldownTicks || (new Date()) - this.layoutStartTickTime > this.cooldownTime) {
+			this.onFrame = null; // Stop ticking graph
+		}
+
+		layout[isD3Sim?'tick':'step'](); // Tick it
+
+		// Update nodes position
+		this.graphData.nodes.forEach(node => {
+			const sphere = node.__sphere,
+				pos = isD3Sim ? node : layout.getNodePosition(node[this.idField]);
+
+			sphere.position.x = pos.x;
+			sphere.position.y = pos.y || 0;
+			sphere.position.z = pos.z || 0;
+		});
+
+		// Update links position
+		this.graphData.links.forEach(link => {
+			const line = link.__line,
+				arrow = link.__arrow,
+				pos = isD3Sim
+					? link
+					: layout.getLinkPosition(layout.graph.getLink(link.source, link.target).id);
+			let start = pos[isD3Sim ? 'source' : 'from'];
+			let end = pos[isD3Sim ? 'target' : 'to'];
+			let linePos = line.geometry.attributes.position;
+
+			linePos.array[0] = start.x;
+			linePos.array[1] = start.y || 0;
+			linePos.array[2] = start.z || 0;
+			linePos.array[3] = end.x;
+			linePos.array[4] = end.y || 0;
+			linePos.array[5] = end.z || 0;
+			linePos.needsUpdate = true;
+			line.geometry.computeBoundingSphere();
+
+			if (arrow) {
+				start.y = start.y || 0;
+				start.z = start.z || 0;
+				end.y = end.y || 0;
+				end.z = end.z || 0;
+				let boundingSphere = line.geometry.boundingSphere;
+				//arrow.position.copy(end);
+				arrow.position.copy(boundingSphere.center);
+
+				arrow.setDirection(new THREE.Vector3(0,0,0).copy(end).sub(start).normalize());
+				arrow.setLength(0, 4, 2);
+			}
+
+		});
+	}
+
+	autoColorNodes(nodes, colorBy, colorField) {
+		if (!colorBy) return;
+
+		// Color brewer paired set
+		const colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'];
+
+		const uncoloredNodes = nodes.filter(node => !node[colorField]),
+			nodeGroups = {};
+
+		uncoloredNodes.forEach(node => { nodeGroups[node[colorBy]] = null; });
+		Object.keys(nodeGroups).forEach((group, idx) => { nodeGroups[group] = idx; });
+
+		uncoloredNodes.forEach(node => {
+			node[colorField] = parseInt(colors[nodeGroups[node[colorBy]] % colors.length].slice(1), 16);
+		});
+	}
+}
+
+return ForceGraph3D;
 
 })));

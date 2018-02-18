@@ -45,7 +45,6 @@
     "rollup-plugin-node-resolve": "^2.0",
     "rollup-plugin-postcss": "^0.2",
     "rollup-watch": "^2.5",
-    "swc": "^0.2",
     "three": "~0.84",
     "uglify-js-es6": "^2.8.9"
   }
