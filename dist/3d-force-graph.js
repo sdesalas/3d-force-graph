@@ -50237,6 +50237,7 @@ const defaults = {
 	valField: 'val',
 	nameField: 'name',
 	colorField: 'color',
+	highlightField: 'highlight',
 	linkSourceField: 'source',
 	linkTargetField: 'target',
 	linkOpacityField: 'opacity',
@@ -50417,12 +50418,24 @@ class ForceGraph3D {
 
 		//const sphereMaterial = new THREE.MeshLambertMaterial({ color: this.sphereColor, transparent: true, opacity: this.sphereOpacity });
 		this.graphData.nodes.forEach(node => {
+			const color = node[this.colorField] || this.sphereColor;
+			const opacity = this.sphereOpacity;
+			const material = new THREE.MeshLambertMaterial({ color: color, transparent: true, opacity: opacity });
 			const sphere = new THREE.Mesh(
 				new THREE.SphereGeometry(Math.cbrt(node[this.valField] || 1) * this.nodeRelSize, 3, 4),
-				new THREE.MeshLambertMaterial({ color: node[this.colorField] || this.sphereColor, transparent: true, opacity: this.sphereOpacity })
+				material
 			);
 
 			sphere.name = node[this.nameField]; // Add label
+			// Add function that can highlight the node for a specific duration in milliseconds
+			node[this.highlightField] = function(duration) {
+				material.color.setHex(0xffffff);
+				material.opacity = 1;
+				setTimeout(() => {
+				  material.color.setHex(color);
+				  material.opacity = opacity;
+				}, duration);
+			};
 
 			this.graphScene.add(node.__sphere = sphere);
 		});
