@@ -50319,7 +50319,12 @@ class ForceGraph3D {
 
 		domNode.addEventListener("click", ev => {
 			if (this.onClick) {
-				this.onClick.call(this, this.mousePos.intersect);
+				const intersect = this.mousePos.intersect;
+				if (intersect && intersect.object && intersect.object instanceof THREE.Mesh) {
+					var node = this.graphData.nodes.find(n => intersect.object === n.__sphere);
+					this.onClick.call(this, node.id, node, intersect);
+				}
+				this.onClick.call(this, intersect);
 			}
 		});
 
