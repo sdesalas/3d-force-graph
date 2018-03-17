@@ -253,7 +253,7 @@ export default class ForceGraph3D {
 			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity) }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
-			line.visible = Math.abs(opacity) > 0.02;
+			line.visible = Math.abs(opacity) > 0.05; // Hide if opacity is less than 5%
 
 			if (this.includeArrows) {
 				const arrow = new THREE.ArrowHelper(new THREE.Vector3(), new THREE.Vector3(), 0, this.lineColor);
