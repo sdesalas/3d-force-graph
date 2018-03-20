@@ -50454,7 +50454,7 @@ class ForceGraph3D {
 			const color = opacity > 0 ? this.lineColor : this.lineColorNeg;
 			geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
 
-			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity) }));
+			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity * 0.7) }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
 			line.visible = Math.abs(opacity) > 0.05; // Hide if opacity is less than 5%
