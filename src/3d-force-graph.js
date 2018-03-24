@@ -217,6 +217,8 @@ export default class ForceGraph3D {
 		// Add WebGL objects
 		while (this.graphScene.children.length) { this.graphScene.remove(this.graphScene.children[0]) } // Clear the place
 
+		const highlightMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+
 		//const sphereMaterial = new THREE.MeshLambertMaterial({ color: this.sphereColor, transparent: true, opacity: this.sphereOpacity });
 		this.graphData.nodes.forEach(node => {
 			const color = node[this.colorField] || this.sphereColor;
@@ -229,10 +231,9 @@ export default class ForceGraph3D {
 
 			sphere.name = node[this.nameField]; // Add label
 			// Add function that can highlight the node for a specific duration in milliseconds
-			node[this.highlightField] = function(duration) {
-				//material.color.setHex(0xffffff);
-				material.opacity = 1;
-				setTimeout(() => material.opacity = opacity, duration);
+			sphere[this.highlightField] = function(duration) {
+				sphere.material = highlightMaterial;
+				setTimeout(() => sphere.material = material, duration);
 			}
 
 			this.graphScene.add(node.__sphere = sphere);
