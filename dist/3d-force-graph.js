@@ -50228,7 +50228,7 @@ const defaults = {
 	lineOpacity: 0.2,
 	lineColor: 0xccfffb,
 	lineColorNeg: 0xff7575,
-	sphereOpacity: 0.6,
+	sphereOpacity: 0.5,
 	sphereColor: 0xccfffb,
 	autoColorBy: undefined,
 	includeArrows: false,
@@ -50434,12 +50434,9 @@ class ForceGraph3D {
 			sphere.name = node[this.nameField]; // Add label
 			// Add function that can highlight the node for a specific duration in milliseconds
 			node[this.highlightField] = function(duration) {
-				material.color.setHex(0xffffff);
+				//material.color.setHex(0xffffff);
 				material.opacity = 1;
-				setTimeout(() => {
-				  material.color.setHex(color);
-				  material.opacity = opacity;
-				}, duration);
+				setTimeout(() => material.opacity = opacity, duration);
 			};
 
 			this.graphScene.add(node.__sphere = sphere);
@@ -50454,10 +50451,10 @@ class ForceGraph3D {
 			const color = opacity > 0 ? this.lineColor : this.lineColorNeg;
 			geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
 
-			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity * 0.7) }));
+			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity * 0.5) }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
-			line.visible = Math.abs(opacity) > 0.05; // Hide if opacity is less than 5%
+			line.visible = Math.abs(opacity) > 0.8; // Hide if opacity is less than 8%
 
 			if (this.includeArrows) {
 				const arrow = new THREE.ArrowHelper(new THREE.Vector3(), new THREE.Vector3(), 0, this.lineColor);
