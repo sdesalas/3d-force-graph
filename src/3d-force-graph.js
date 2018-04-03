@@ -20,12 +20,12 @@ const defaults = {
 		links: []
 	},
 	numDimensions: 3,
-	nodeRelSize: 4, // volume per val unit
+	nodeRelSize: 8, // volume per val unit
 	lineOpacity: 0.2,
 	lineColor: 0xccfffb,
 	lineColorNeg: 0xff7575,
-	sphereOpacity: 0.5,
-	sphereColor: 0xccfffb,
+	sphereOpacity: 1,
+	sphereColor: 0x5a6d6c,
 	autoColorBy: undefined,
 	includeArrows: false,
 	highlightItems: false,
@@ -43,7 +43,7 @@ const defaults = {
 	cooldownTime: 15000, // ms
 	onMouseOver: undefined, // mouse over an object
 	onClick: undefined, // click on an object
-	onReady: undefined // initialised
+	onReady: undefined // initialised 
 };
 
 export default class ForceGraph3D {
@@ -130,12 +130,13 @@ export default class ForceGraph3D {
 
 		// Setup scene
 		this.scene = new THREE.Scene();
+		this.scene.fog = new THREE.FogExp2( 0x0000A, 0.0005 );
 		this.scene.background = new THREE.Color(0x0000A);
 		this.scene.add(this.graphScene = new THREE.Group());
 
 		// Add lights
-		this.scene.add(new THREE.AmbientLight(0xbbbbbb));
-		this.scene.add(new THREE.DirectionalLight(0xffffff, 0.6));
+		//this.scene.add(new THREE.AmbientLight(0xbbbbbb));
+		//this.scene.add(new THREE.DirectionalLight(0xffffff, 0.6));
 
 		// Setup camera
 		this.camera = new THREE.PerspectiveCamera();
@@ -217,9 +218,36 @@ export default class ForceGraph3D {
 		// Add WebGL objects
 		while (this.graphScene.children.length) { this.graphScene.remove(this.graphScene.children[0]) } // Clear the place
 
-		const highlightMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+		const sprite = new THREE.TextureLoader().load( "/static/disc.png" );
+		const highlightMaterial = new THREE.PointsMaterial( { color: 0xffffff, map: sprite, size: this.nodeRelSize * 1.5, blending: THREE.AdditiveBlending, depthTest: false, transparent : true } );
+
+		this.graphData.nodes.forEach(node => {
+
+			const color = node[this.colorField] || this.sphereColor;
+			const opacity = this.sphereOpacity;
+			const size = Math.cbrt(node[this.valField] || 1) * this.nodeRelSize;
+			const geometry = new THREE.Geometry();
+			const material = new THREE.PointsMaterial( { color: color, size: size, opacity: opacity, map: sprite, blending: THREE.AdditiveBlending, depthTest: false, transparent : true } );			
+
+			geometry.vertices.push( new THREE.Vector3() );
+
+			const sphere = new THREE.Points( geometry, material );
+
+			sphere.name = node[this.nameField]; // Add label
+
+			// Add function that can highlight the node for a specific duration in milliseconds
+			node[this.highlightField] = function(duration) {
+				sphere.material = highlightMaterial;
+				setTimeout(() => sphere.material = material, duration);
+			}
+
+			this.graphScene.add(node.__sphere = sphere);
+
+		});
+
 
 		//const sphereMaterial = new THREE.MeshLambertMaterial({ color: this.sphereColor, transparent: true, opacity: this.sphereOpacity });
+/*
 		this.graphData.nodes.forEach(node => {
 			const color = node[this.colorField] || this.sphereColor;
 			const opacity = this.sphereOpacity;
@@ -238,7 +266,7 @@ export default class ForceGraph3D {
 
 			this.graphScene.add(node.__sphere = sphere);
 		});
-
+*/
 		//const lineMaterial = new THREE.LineBasicMaterial({ color: this.lineColor, transparent: true, opacity: this.lineOpacity });
 		const arrowMaterial = new THREE.MeshLambertMaterial({ color: this.lineColor, transparent: true, opacity: this.lineOpacity });
 		
@@ -251,7 +279,7 @@ export default class ForceGraph3D {
 			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity * 0.5) }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
-			line.visible = Math.abs(opacity) > 0.8; // Hide if opacity is less than 8%
+			line.visible = Math.abs(opacity) > 0.2; // Hide if opacity is less than 8%
 
 			if (this.includeArrows) {
 				const arrow = new THREE.ArrowHelper(new THREE.Vector3(), new THREE.Vector3(), 0, this.lineColor);
