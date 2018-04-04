@@ -245,28 +245,6 @@ export default class ForceGraph3D {
 
 		});
 
-
-		//const sphereMaterial = new THREE.MeshLambertMaterial({ color: this.sphereColor, transparent: true, opacity: this.sphereOpacity });
-/*
-		this.graphData.nodes.forEach(node => {
-			const color = node[this.colorField] || this.sphereColor;
-			const opacity = this.sphereOpacity;
-			const material = new THREE.MeshLambertMaterial({ color: color, transparent: true, opacity: opacity });
-			const sphere = new THREE.Mesh(
-				new THREE.SphereGeometry(Math.cbrt(node[this.valField] || 1) * this.nodeRelSize, 3, 4),
-				material
-			);
-
-			sphere.name = node[this.nameField]; // Add label
-			// Add function that can highlight the node for a specific duration in milliseconds
-			sphere[this.highlightField] = function(duration) {
-				sphere.material = highlightMaterial;
-				setTimeout(() => sphere.material = material, duration);
-			}
-
-			this.graphScene.add(node.__sphere = sphere);
-		});
-*/
 		//const lineMaterial = new THREE.LineBasicMaterial({ color: this.lineColor, transparent: true, opacity: this.lineOpacity });
 		const arrowMaterial = new THREE.MeshLambertMaterial({ color: this.lineColor, transparent: true, opacity: this.lineOpacity });
 		
@@ -279,7 +257,7 @@ export default class ForceGraph3D {
 			const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: Math.abs(opacity * 0.5) }));
 
 			line.renderOrder = 10; // Prevent visual glitches of dark lines on top of spheres by rendering them last
-			line.visible = Math.abs(opacity) > 0.1; // Hide if opacity is less than 10%
+			line.visible = Math.abs(opacity) > 0.10; // Hide if opacity is less than 10%
 
 			if (this.includeArrows) {
 				const arrow = new THREE.ArrowHelper(new THREE.Vector3(), new THREE.Vector3(), 0, this.lineColor);
